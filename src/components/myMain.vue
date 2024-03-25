@@ -120,18 +120,21 @@ function resetCellStyles() {
   if(numSelected.value != null){
     numSelected.value.style.cssText = "";
   }
+  numSelected.value = null;
 
 }
 
 // Disabilita tutti i bottoni numerici
 function disableAllButtons(){
   digitNumbers.forEach(button => {
-    button.setAttribute('disabled', true) 
-  })
+    button.setAttribute('disabled', true);
+    button.style.cssText = "";
+  });
 }
 
 function selectCell(id){
 
+  
   resetCellStyles();
 
   // valorizzo la variabile "cellSelected" con la cella selezionata
@@ -185,6 +188,20 @@ function enableNumber(){
 }
 
 function insertNumber(number){
+
+  // TODO: togliere gli stili evidenziati a tutti i numeri delle celle e al bottone con lo stesso numero
+
+  // queste azioni le svolgo nel caso in cui si inserisce un numero sbagliato nella stessa cella più di una volta 
+  // Rimuovi gli stili dalle celle
+  allCells.forEach(cell => {
+    cell.classList.remove('equal-number');
+  });
+  
+  // Rimuovi gli stili dai bottoni
+  digitNumbers.forEach(button => {
+    button.style.cssText = "";
+  });
+  // ---------------------------------------------
   
   // valorizzo la variabile "numSelected" col bottone/numero selezionato
   numSelected.value = document.getElementById(number);
@@ -233,7 +250,11 @@ function insertNumber(number){
     // aggiungo il bordo interno 
     cellSelected.value.style.cssText ="box-shadow: inset 0 0 0 3px rgb(87, 101, 233)";
 
+    //2. mi evidenzi gli stessi numeri nella #board
+    highlightRowCol(cellSelected.value.id);
+
   }
+
   
 }
 
@@ -287,9 +308,14 @@ function highlightRowCol(id){
       cell.classList.add('equal-number');
     }
 
-
   }) // fine del ciclo di tutte le celle
 
+    // mi evidenzia anche il bottone con quel numero
+  digitNumbers.forEach(button => {
+    if(button.id === cellSelected.value.innerText){
+      button.style.cssText = "background-color: lightgray; color: #00eef7";
+    }
+  });
 }
 
 
