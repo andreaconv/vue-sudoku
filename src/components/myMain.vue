@@ -137,6 +137,8 @@ function selectCell(id){
   // valorizzo la variabile "cellSelected" con la cella selezionata
   cellSelected.value = document.getElementById(id);
 
+  // console.log("cella selezionata", cellSelected.value);
+
   // se la cella è vuota aggiungo la classe "cell-selected" 
   if(cellSelected.value.innerText === ''){
     cellSelected.value.classList.add('cell-selected');
@@ -154,6 +156,7 @@ function selectCell(id){
   
   //evidenzio righe e colonne della cella selezionata
   highlightRowCol(id);
+  
 
 }
 
@@ -196,7 +199,7 @@ function insertNumber(number){
 
   // se il numero che si vuole inserire corrisponde al numero giusto in quella posizione
   if(solution[r][c] == numSelected.value.id){
-    console.log("hai inserito il numero GIUSTO!!");
+    console.log("%c hai inserito il numero GIUSTO!!", 'color: #1df700');
 
     //FIXME: se il numero è corretto mi fai la stessa cosa che succede quando clicco una cella start cioè:
     
@@ -238,23 +241,22 @@ function insertNumber(number){
 function highlightRowCol(id){
 
   // mi salvo le coordinate tramite l'id della cella selezionata
-  let coordsSelectedCell = id.split('-');
-  let rSelectedCell = parseInt(coordsSelectedCell[0]);
-  let cSelectedCell = parseInt(coordsSelectedCell[1]);
+  const [rSelectedCell, cSelectedCell] = id.split('-').map(Number);
+  // let coordsSelectedCell = id.split('-');
+  // let rSelectedCell = parseInt(coordsSelectedCell[0]);
+  // let cSelectedCell = parseInt(coordsSelectedCell[1]);
+
   
   // ciclo tutte le celle 
   allCells.forEach(cell => {
-    let coords = cell.id.split('-');
-    let r = parseInt(coords[0]);
-    let c = parseInt(coords[1]);
+    const [r, c] = cell.id.split('-').map(Number);
+    // let coords = cell.id.split('-');
+    // let r = parseInt(coords[0]);
+    // let c = parseInt(coords[1]);
 
-    // evidenzio tutti i numeri uguali ciclando tutte le celle e aggiungendo la classe "equal-number" se all'interno c'è lo stesso numero cliccato
-    if(cell.innerText === cellSelected.value.innerText){
-      cell.classList.add('equal-number');
-    }
 
     // evidenzio le celle della stessa riga e della stessa colonna alla cella selezionata
-    if(rSelectedCell === r || cSelectedCell === c){
+    if (r === rSelectedCell || c === cSelectedCell){
       cell.classList.add('row-col-selected');
       if(cell.classList.contains('cell-start')){
         // dato che le celle iniziali hanno già un background mi trovo costretto a cambiare classe per modificare il backgroud-color
@@ -264,10 +266,32 @@ function highlightRowCol(id){
       }
     }
 
-    // TODO: evidenziare anche il quadrato
-  })
+    // evidenzia anche il quadrato
+    const inSameRow = r === rSelectedCell;
+    const inSameCol = c === cSelectedCell;
+    const inSameSquare =
+      Math.floor(r / 3) === Math.floor(rSelectedCell / 3) &&
+      Math.floor(c / 3) === Math.floor(cSelectedCell / 3);
+
+    if (inSameRow || inSameCol || inSameSquare) {
+      cell.classList.add('row-col-selected');
+      if (cell.classList.contains('cell-start')) {
+        cell.classList.remove('cell-start');
+        cell.classList.add('cell-start-selected');
+      }
+    }
+
+    // evidenzio tutti i numeri uguali
+    // se la cella NON è vuota e se all'interno c'è lo stesso numero cliccato aggiungo la classe "equal-number"
+    if(cellSelected.value.innerText !== '' && cell.innerText === cellSelected.value.innerText){
+      cell.classList.add('equal-number');
+    }
+
+
+  }) // fine del ciclo di tutte le celle
 
 }
+
 
 function printNumber(r, c){
   if(board[(r - 1)][(c - 1)] != "-"){
