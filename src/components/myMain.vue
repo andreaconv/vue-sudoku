@@ -6,10 +6,16 @@ const limit = ref(9);
 let numSelected = ref(null);
 let cellSelected = ref(null);
 
-let allCells = ref([]);
-let digitNumbers = ref([]);
+let allCells = ref([]); //array di tutte le celle
+let digitNumbers = ref([]); //array di tutti i pulsanti dei numeri
 
 let errors = ref(0);
+
+// per la fine del gioco
+let allCellStart = ref([]); // tutte le celle iniziali
+let emptyCellCount = ref(0); // tutte le celle vuoute
+let correctCount = ref(0); //counter per le celle giuste inserite
+let isGameOver = ref(false);
 
 // COUNTER
 let counter1 = ref(0);
@@ -23,45 +29,36 @@ let counter8 = ref(0);
 let counter9 = ref(0);
 
 
-// const board = [
-//   "--74916-5",
-//   "2---6-3-9",
-//   "-----7-1-",
-//   "-586----4",
-//   "--3----9-",
-//   "--62--187",
-//   "9-4-7---2",
-//   "67-83----",
-//   "81--45---"
-// ]
 const board = [
-  "--74916-5",
-  "2---6-379",
-  "--9--7-1-",
-  "7586-9--4",
-  "--37---9-",
-  "-962--187",
-  "9-4-7---2",
-  "67-83-9--",
-  "81-945---"
-]
+  "-26---81-",
+  "3--7-8--6",
+  "4---5---7",
+  "-5-1-7-9-",
+  "--39-51--",
+  "-4-3-2-5-",
+  "1---3---2",
+  "5--2-4--9",
+  "-38---46-"
+];
 
 const solution = [
-  "387491625",
-  "241568379",
-  "569327418",
-  "758619234",
-  "123784596",
-  "496253187",
-  "934176852",
-  "675832941",
-  "812945763"
-]
+  "726493815",
+  "315728946",
+  "489651237",
+  "852147693",
+  "673985124",
+  "941362758",
+  "194836572",
+  "567214389",
+  "238579461"
+];
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutsideCell);
   allCells = document.querySelectorAll(".cell");
   digitNumbers = document.querySelectorAll('.number');
+  allCellStart = document.querySelectorAll('.cell-start');
+  emptyCellCount = (limit.value * limit.value) - allCellStart.length; //calcolo quante celle vuote ci sono
 
   // ciclo tutte le celle, aumento il counter del numero che sta all'interno della cella
   allCells.forEach(cell => {
@@ -101,9 +98,10 @@ function resetCellStyles() {
     cell.classList.remove('cell-start-selected'); 
 
     // nel ciclo mi salvo le coordinate 
-    let coords = cell.id.split('-');
-    let r = parseInt(coords[0]);
-    let c = parseInt(coords[1]);
+    const [r, c] = cell.id.split('-').map(Number);
+    // let coords = cell.id.split('-');
+    // let r = parseInt(coords[0]);
+    // let c = parseInt(coords[1]);
 
     if(board[r][c] != '-'){
       cell.classList.add('cell-start');
@@ -210,13 +208,14 @@ function insertNumber(number){
   cellSelected.value.innerText = numSelected.value.id;
 
   // mi salvo le coordinate della cella cliccata e le divido in due variabili
-  let coords = cellSelected.value.id.split('-');
-  let r = parseInt(coords[0]); // riga della cella selezionata
-  let c = parseInt(coords[1]); // colonna della cella selezionata
+  const [r, c] = cellSelected.value.id.split('-').map(Number);
+  // let coords = cellSelected.value.id.split('-');
+  // let r = parseInt(coords[0]); // riga della cella selezionata
+  // let c = parseInt(coords[1]); // colonna della cella selezionata
 
   // se il numero che si vuole inserire corrisponde al numero giusto in quella posizione
   if(solution[r][c] == numSelected.value.id){
-    console.log("%c hai inserito il numero GIUSTO!!", 'color: #1df700');
+    console.log("Hai inserito il numero GIUSTO!!");
 
     //FIXME: se il numero è corretto mi fai la stessa cosa che succede quando clicco una cella start cioè:
     
@@ -237,10 +236,18 @@ function insertNumber(number){
     // incremeto il contatore di quel numero
     eval(`counter${numSelected.value.id}.value++`); 
 
+    correctCount.value++; // Incrementa solo se il numero inserito è corretto
+    
+    // Verifica se tutti i numeri sono stati inseriti correttamente
+    if (correctCount.value === emptyCellCount) {
+      gameOver();
+    }
+
     // la variabile "cella selezionata" torna ad essere nulla 
     cellSelected.value = null;
 
   } else {
+
     //incremeto il contatore degli errori
     errors.value ++;
     // tolgo la classe "cell-selected" per aggiungere "bg-danger"
@@ -252,6 +259,17 @@ function insertNumber(number){
 
     //2. mi evidenzi gli stessi numeri nella #board
     highlightRowCol(cellSelected.value.id);
+
+    // animazione
+    const numOfErrors = document.getElementById('errors');
+    // aggiungo
+    setTimeout(() => {
+      numOfErrors.classList.add('enlarge');
+    }, 50)
+    // rimuovo
+    setTimeout(() => {
+      numOfErrors.classList.remove('enlarge');
+    }, 1000)
 
   }
 
@@ -325,6 +343,21 @@ function printNumber(r, c){
   }
 }
 
+function gameOver() {
+  console.log("%cHAI VINTO!!!", 'color: #1df700');
+
+
+  const game = document.getElementById('game');
+  game.classList.add('fade-out');
+
+  setTimeout(() => {
+    
+    isGameOver.value = true;
+
+  }, 2000);
+}
+
+
 // Rimuovi l'event listener quando il componente viene distrutto per evitare memory leak
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutsideCell);
@@ -334,66 +367,83 @@ onUnmounted(() => {
 
 <template>
   <main>
-    <div class="container text-center">
+    <div class="container text-center pt-3">
 
-      <h1>SUDOKU</h1>
+      <div v-if="isGameOver" id="end-game" class="fade-in py-4">
+        <h1>Eccellente! Hai finito il sudoku con successo</h1>
+      </div>
 
-      <div id="errors" class="text-danger fw-bold fs-2">Errori: {{ errors }}</div>
-
-      <div id="board" class="mx-auto border border-white border-3">
-        <div v-for="c in limit" :key="c">
-          <div v-for="r in limit" :key="r">
-
-            <div
-              :id="((r - 1) + '-' + (c - 1))"
-              class="cell"
-              :class="{ 
-                'cell-start': (board[(r - 1)][(c - 1)] != '-'), 
-                'horizontal-line': (r == 3 || r == 6), 
-                'vertical-line': (c == 3 || c == 6)
-              }"
-              @click="selectCell((r - 1) + '-' + (c - 1))"
-              > <!-- al click passo l'id come parametro-->
-              {{ printNumber(r,c) }}
+      <div v-else id="game">
+        
+        <h2>SUDOKU <span class="text-info">Livello: facile</span></h2>
+      
+        <div class="fw-bold fs-3 ">Errori: 
+          <span 
+            id="errors"
+            :class="{
+              'text-danger': errors > 0
+              }">
+            {{errors}}
+          </span>
+        </div>
+      
+          <div id="board" class="mx-auto mb-3 border border-white border-3">
+            <div v-for="c in limit" :key="c">
+              <div v-for="r in limit" :key="r">
+    
+                <div
+                  :id="((r - 1) + '-' + (c - 1))"
+                  class="cell"
+                  :class="{ 
+                    'cell-start': (board[(r - 1)][(c - 1)] != '-'), 
+                    'horizontal-line': (r == 3 || r == 6), 
+                    'vertical-line': (c == 3 || c == 6)
+                  }"
+                  @click="selectCell((r - 1) + '-' + (c - 1))"
+                  > <!-- al click passo l'id come parametro-->
+                  {{ printNumber(r,c) }}
+                </div>
+    
+              </div>
             </div>
-
           </div>
-        </div>
+      
+          <div id="digits" class="mx-auto">
+            <div class="row-ac d-flex px-3">
+              
+              <div class="col d-flex flex-wrap justify-content-center px-1">
+              <!-- <div class="col col-10 d-flex flex-wrap"> -->
+                <!--TODO: per la matita togliere i commenti -->
+                
+                <button
+                  v-for="i in limit"
+                  :key="i"
+                  :id="i"
+                  type="button"
+                  class="number btn btn-outline-light" 
+                  disabled 
+                  @click="insertNumber(i)">
+                  <!-- data-bs-toggle="button" -->
+                  {{i}}
+                </button>
+    
+                <!-- <button type="button" id="delete" class="btn btn-outline-light p-0 px-1" disabled>
+                  <i class="fa-solid fa-delete-left"></i>
+                </button> -->
+
+              </div>
+    
+              <!-- TODO: toggle da btn-light a btn-warning -->
+              <!-- <div class="col col-2 p-0 rounded">
+                <span class="btn btn-outline-light h-100 d-flex align-items-center justify-content-center">
+                  <i class="fa-solid fa-pencil"></i>
+                </span>
+              </div> -->
+
+            </div>
+          </div>
+
       </div>
-
-      <br>
-
-      <div id="digits" class="mx-auto">
-        <div class="row-ac d-flex px-3">
-          
-          <div class="col col-10 d-flex flex-wrap">
-            
-            <button
-              v-for="i in limit"
-              :key="i"
-              :id="i"
-              type="button"
-              class="number btn btn-outline-light" 
-              disabled 
-              @click="insertNumber(i)">
-              <!-- data-bs-toggle="button" -->
-              {{i}}
-              </button>
-
-            <button type="button" id="delete" class="btn btn-outline-light p-0 px-1" disabled>
-              <i class="fa-solid fa-delete-left"></i>
-            </button>
-          </div>
-
-          <!-- TODO: toggle da btn-light a btn-warning -->
-          <div class="col col-2 p-0 rounded">
-            <span class="btn btn-outline-light h-100 d-flex align-items-center justify-content-center">
-              <i class="fa-solid fa-pencil"></i>
-            </span>
-          </div>
-        </div>
-      </div>
-
 
     </div>
 
@@ -481,6 +531,34 @@ main{
         font-size: 2rem;
         margin: 2px;
       }
+    }
+
+    .fade-in {
+      animation: fade 1s;
+      animation-fill-mode: forwards;
+    }
+
+    .fade-out {
+      animation: fade 2s;
+      animation-fill-mode: forwards;
+      animation-direction: reverse;
+    }
+
+    @keyframes fade {
+      0%   { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    .enlarge{
+      display: inline-block;
+      animation: enlarge 1s;
+    }
+
+    @keyframes enlarge {
+      0% {transform: scale(1);}
+      50% {transform: scale(1.4);}
+      100% {transform: scale(1);}
+      
     }
 
   }
