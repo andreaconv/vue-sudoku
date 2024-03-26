@@ -17,16 +17,8 @@ let emptyCellCount = ref(0); // tutte le celle vuoute
 let correctCount = ref(0); //counter per le celle giuste inserite
 let isGameOver = ref(false);
 
-// COUNTER
-let counter1 = ref(0);
-let counter2 = ref(0);
-let counter3 = ref(0);
-let counter4 = ref(0);
-let counter5 = ref(0);
-let counter6 = ref(0);
-let counter7 = ref(0);
-let counter8 = ref(0);
-let counter9 = ref(0);
+// ARRAY che contine tutti i contatori dei numeri
+let counters = [];
 
 
 const board = [
@@ -60,12 +52,18 @@ onMounted(() => {
   allCellStart = document.querySelectorAll('.cell-start');
   emptyCellCount = (limit.value * limit.value) - allCellStart.length; //calcolo quante celle vuote ci sono
 
+  // inizializza tutti i contatori a 0
+  for (let i = 0; i <= 9; i++) {
+    counters.push(ref(0)); 
+  }
+
   // ciclo tutte le celle, aumento il counter del numero che sta all'interno della cella
   allCells.forEach(cell => {
     for (let i = 1; i <= 9; i++) {
       if (parseInt(cell.innerText) === i) {
-        eval(`counter${i}.value++`);
-        break; 
+        // eval(`counter${i}.value++`);
+        // break; 
+        incrementCounter(i);
       }
     }
   });
@@ -78,7 +76,11 @@ window.onload = function(){
   // console.log("funzione generata dopo il mounted");
 }
 
+function incrementCounter(number) {
+  counters[number].value++;
+}
 
+// funzione richiamata goni volta che si clicca
 function handleClickOutsideCell(event) {
   const isClickedInsideCell = event.target.classList.contains('cell');
   const isClickedInsideButton = event.target.classList.contains('number');
@@ -177,7 +179,7 @@ function enableNumber(){
   // 2. disattivo quelli non disponibili
    // ciclo su tutti i contatori e disabilita i bottoni associati se il contatore ha raggiunto la lunghezza massima
   for (let i = 1; i <= 9; i++) {
-    const counter = eval(`counter${i}.value`);
+    const counter = counters[i].value;
     if (counter === limit.value) {
       document.getElementById(i.toString()).setAttribute('disabled', true);
     }
@@ -234,7 +236,8 @@ function insertNumber(number){
     numSelected.value.style.cssText = "background-color: lightgray; color: #00eef7";
 
     // incremeto il contatore di quel numero
-    eval(`counter${numSelected.value.id}.value++`); 
+    // eval(`counter${numSelected.value.id}.value++`);
+    incrementCounter(parseInt(numSelected.value.id));
 
     correctCount.value++; // Incrementa solo se il numero inserito è corretto
     
